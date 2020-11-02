@@ -8,4 +8,6 @@ from cpu import *
 cpu = CPU()
 
 cpu.load()
+print("loaded")
 cpu.run()
+print("run success")
