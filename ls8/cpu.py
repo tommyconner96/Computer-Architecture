@@ -2,9 +2,14 @@
 
 import sys
 
-LDI = 0b10000010
-HLT = 0b00000001
-PRN = 0b01000111
+# LDI = 0b10000010
+# HLT = 0b00000001
+# PRN = 0b01000111
+# MUL = 0b10100010
+LDI = 130
+HLT = 1
+PRN = 71
+MUL = 162
 
 class CPU:
     """Main CPU class."""
@@ -16,7 +21,7 @@ class CPU:
         * `MAR`: Memory Address Register, holds the memory address we're reading or writing
         * `MDR`: Memory Data Register, holds the value to write or the value just read
         * `FL`: Flags, see below
-        """        
+        """
         self.pc = 0
         self.mar = 0
         self.mdr = 0
@@ -26,7 +31,6 @@ class CPU:
         # self.ie = None
         self.reg = [0] * 8
         self.ram = [0] * 256
-
 
     def load(self):
         """Load a program into memory."""
@@ -54,23 +58,24 @@ class CPU:
             for line in f:
                 # Split the line on the comment character (#)
                 line_split = line.split('#')
-                # Extract the command from the split line        
+                # Extract the command from the split line
                 # It will be the first value in our split line
                 command = line_split[0].strip()
                 if command == '':
                     continue
                 # specify that the number is base 10
                 command_num = int(command, 2)
-                program.append(command_num)    
+                # print(command_num)
+                program.append(command_num)
 
-                for instruction in program:
-                    # self.ram[address] = instruction
-                    self.ram_write(instruction, address)
-                    address += 1
-            print(program)
-            return program
+            for instruction in program:
+                self.ram[address] = instruction
+                address += 1
+            # print(program)
+            # return program
     # def halt(self):
     #     self.running = False
+
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
@@ -101,14 +106,15 @@ class CPU:
         print()
 
     def ram_read(self, adr):
-        if adr >= 0 and adr < len(self.ram):
-            return self.ram[adr]
-        else:
-            print("error")
-            return -1
+        # if adr >= 0 and adr < len(self.ram):
+        return self.ram[adr]
+        # else:
+        #     print("error")
+        #     return -1
 
     def ram_write(self, val, adr):
-        self.ram[val] = adr
+        self.ram[adr] = val
+        return self.ram[adr]
 
     def run(self):
         running = self.running
@@ -118,15 +124,20 @@ class CPU:
             command = self.ram_read(self.pc)
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
+            # print(operand_a, operand_b)
+            # print(command)
             if command == HLT:
                 running = False
                 self.pc += 1
             elif command == PRN:
                 print(self.reg[operand_a])
-                self.pc +=2
+                self.pc += 2
             elif command == LDI:
+                # print(operand_a, operand_b)
                 self.reg[operand_a] = operand_b
+                self.pc += 3
+            elif command == MUL:
+                self.reg[operand_a] *= self.reg[operand_b]
                 self.pc += 3
             else:
                 running = False
-        
