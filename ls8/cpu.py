@@ -6,10 +6,14 @@ import sys
 # HLT = 0b00000001
 # PRN = 0b01000111
 # MUL = 0b10100010
+SP = 7  # stack pointer
 LDI = 130
 HLT = 1
 PRN = 71
 MUL = 162
+PUSH = 69
+POP = 70
+
 
 class CPU:
     """Main CPU class."""
@@ -47,7 +51,7 @@ class CPU:
         #     0b00000000,
         #     0b00000001,  # HLT
         # ]
-        program = []
+        # program = []
         # LOAD A PROGRAM INTO MEMORY
         print(sys.argv)
         if len(sys.argv) != 2:
@@ -66,11 +70,14 @@ class CPU:
                 # specify that the number is base 10
                 command_num = int(command, 2)
                 # print(command_num)
-                program.append(command_num)
+                # program.append(command_num)
+                self.ram[address] = command_num
+                address +=1
 
-            for instruction in program:
-                self.ram[address] = instruction
-                address += 1
+        # REVISIT IF WE GET AN INFINITE LOOP. DAY 3 lecture  1:10 for reference
+            # for instruction in program:
+            #     self.ram[address] = instruction
+            #     address += 1
             # print(program)
             # return program
     # def halt(self):
@@ -114,7 +121,6 @@ class CPU:
 
     def ram_write(self, val, adr):
         self.ram[adr] = val
-        return self.ram[adr]
 
     def run(self):
         running = self.running
@@ -139,5 +145,18 @@ class CPU:
             elif command == MUL:
                 self.reg[operand_a] *= self.reg[operand_b]
                 self.pc += 3
-            else:
-                running = False
+            elif command == PUSH:
+                value_to_push = self.reg[operand_a]
+                # move the stack pointer down
+                self.reg[SP] -= 1
+                # write the value to push, into the top of stack
+                self.ram[self.reg[SP]] = value_to_push
+                self.pc += 2
+            elif command == POP:
+                # Read the given register address
+                # Read the value at the top of the stack
+                # store that into the register given
+                self.reg[operand_a] = self.ram[self.reg[SP]]
+                # move the stack pointer back up
+                self.reg[SP] += 1
+                self.pc += 2
