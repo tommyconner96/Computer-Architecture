@@ -113,11 +113,7 @@ class CPU:
         print()
 
     def ram_read(self, adr):
-        # if adr >= 0 and adr < len(self.ram):
         return self.ram[adr]
-        # else:
-        #     print("error")
-        #     return -1
 
     def ram_write(self, val, adr):
         self.ram[adr] = val
