@@ -18,6 +18,9 @@ PUSH = 69
 POP = 70
 CALL = 80
 RET = 17
+JMP = 84
+JEQ = 85
+JNE = 86
 
 
 class CPU:
@@ -36,7 +39,7 @@ class CPU:
         self.mar = 0
         self.mdr = 0
         self.ir = None
-        self.fl = None
+        self.fl = 0b00000000
         self.running = False
         # self.ie = None
         self.reg = [0] * 8
@@ -47,19 +50,6 @@ class CPU:
         """Load a program into memory."""
 
         address = 0
-
-        # For now, we've just hardcoded a program:
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010,  # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111,  # PRN R0
-        #     0b00000000,
-        #     0b00000001,  # HLT
-        # ]
-        # program = []
-        # LOAD A PROGRAM INTO MEMORY
         print(sys.argv)
         if len(sys.argv) != 2:
             print("Wrong number of arguments, please pass file name")
@@ -80,7 +70,6 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "SUB":
@@ -89,6 +78,17 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] //= self.reg[reg_b]
+        elif op == "CMP":
+            # print(self.fl, "initial")
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.fl = 0b00000001
+                # print(self.fl, "eq")
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.fl = 0b00000010
+                # print(self.fl, "greater than")
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.fl = 0b00000100
+                # print(self.fl, "less than")
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -113,11 +113,7 @@ class CPU:
         print()
 
     def ram_read(self, adr):
-        # if adr >= 0 and adr < len(self.ram):
         return self.ram[adr]
-        # else:
-        #     print("error")
-        #     return -1
 
     def ram_write(self, val, adr):
         self.ram[adr] = val
@@ -135,6 +131,23 @@ class CPU:
             return "MUL"
         if command == 163:
             return "DIV"
+        if command == 167:
+            return "CMP"
+
+    def JMP(self):
+        self.pc = self.reg[self.ram[self.pc + 1]]
+
+    def JEQ(self):
+        if self.fl & 0b1 == 1:
+            self.JMP()
+        else:
+            self.pc += 2
+
+    def JNE(self):
+        if self.fl & 0b00000001 == 0:
+            self.JMP()
+        else:
+            self.pc += 2
 
     def run(self):
         running = self.running
@@ -188,3 +201,10 @@ class CPU:
                 # Pop the top of the stack and set the PC to the value of what was popped
                 self.pc = self.ram[self.reg[self.SP]]
                 self.reg[self.SP] += 1
+            elif command == JMP:
+                self.JMP()
+
+            elif command == JEQ:
+                self.JEQ()
+            elif command == JNE:
+                self.JNE()
